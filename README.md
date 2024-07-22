@@ -1,0 +1,1 @@
+Java Chess is a simple Local Multiplayer Chess Game created using Java Code. Play with custom-designed pieces against a friend, with a tile-highlighting system showing you all your possible moves. More features TBA.
