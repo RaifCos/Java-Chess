@@ -12,14 +12,14 @@ public class Pawn extends Piece {
         if(y < 0 || y > 7) { return boardData; }
         if(team == 1) {
             if (boardData[x][y-1] == 0) { boardData[x][y-1] = 3; }
-            if (moveCount == 0 && boardData[x][y-2] == 0) { boardData[x][y-2] = 3; }
             if (x < 7 && boardData[x+1][y-1] == 2) { boardData[x+1][y-1] = 3; }
             if (x > 0 && boardData[x-1][y-1] == 2) { boardData[x-1][y-1] = 3; }
+            if (moveCount == 0 && boardData[x][y-1] == 3 && boardData[x][y-2] == 0) { boardData[x][y-2] = 3; }
         } else {
             if (boardData[x][y+1] == 0) { boardData[x][y+1] = 3; }
-            if (moveCount == 0 && boardData[x][y+2] == 0) { boardData[x][y+2] = 3; }
             if (x < 7 && boardData[x+1][y+1] == 1) { boardData[x+1][y+1] = 3; }
             if (x > 0 && boardData[x-1][y+1] == 1) { boardData[x-1][y+1] = 3; }
+            if (moveCount == 0 && boardData[x][y+1] == 3 && boardData[x][y+2] == 0) { boardData[x][y+2] = 3; }
         }
         return boardData;
     }
