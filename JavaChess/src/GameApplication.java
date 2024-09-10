@@ -4,7 +4,6 @@ import javax.swing.*;
 import java.awt.image.*;
 import java.util.ArrayList;
 
-// TODO: Fix Pawns (0,Y) Glitch
 // TODO: Implement "Check" Mode (Players can only make moves to protect their King).
 // TODO: Implement Pawn Upgrades
 
@@ -154,6 +153,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
             whiteTurn = !whiteTurn;
         } // No Piece is Selected, so check if the Player is clicking on a Piece to select it.
         else {
+            refreshBoardData();
             // If it is White's Turn, check for a White Piece to select.
             if(whiteTurn) {
                 for (Piece p : whitePieces) {
