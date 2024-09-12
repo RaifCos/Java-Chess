@@ -184,7 +184,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
                         selectedPiece = p;
                         boardData = selectedPiece.possibleMoves(boardData);
                         // If a King is selected, check if "Castling" is possible.
-                        if(p instanceof King && p.moveCount == 0) { castleCheck(1); }
+                        if(p instanceof King && p.moveCount == 0) { castleCheck(0); }
                         break;
                     } else { refreshBoardData(); }
                 }
@@ -195,7 +195,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
                         selectedPiece = p;
                         boardData = selectedPiece.possibleMoves(boardData);
                         // If a King is selected, check if "Castling" is possible.
-                        if(p instanceof King && p.moveCount == 0) { castleCheck(2); }
+                        if(p instanceof King && p.moveCount == 0) { castleCheck(1); }
                         break;
                     } else { refreshBoardData(); }
                 }
