@@ -9,17 +9,17 @@ public class Knight extends Piece {
     }
 
     public int[][] possibleMoves(int[][] boardData) {
-        if(checkRange(x+1, y+2) && boardData[x+1][y+2] != team) { boardData[x+1][y+2] = 3; }
-        if(checkRange(x+2, y+1) && boardData[x+2][y+1] != team) { boardData[x+2][y+1] = 3; }
+        if(checkRange(x+1, y+2) && boardData[x+1][y+2] != team + 1) { boardData[x+1][y+2] = 3; }
+        if(checkRange(x+2, y+1) && boardData[x+2][y+1] != team + 1) { boardData[x+2][y+1] = 3; }
 
-        if(checkRange(x+1, y-2) && boardData[x+1][y-2] != team) { boardData[x+1][y-2] = 3; }
-        if(checkRange(x+2, y-1) && boardData[x+2][y-1] != team) { boardData[x+2][y-1] = 3; }
+        if(checkRange(x+1, y-2) && boardData[x+1][y-2] != team + 1) { boardData[x+1][y-2] = 3; }
+        if(checkRange(x+2, y-1) && boardData[x+2][y-1] != team + 1) { boardData[x+2][y-1] = 3; }
 
-        if(checkRange(x-1, y+2) && boardData[x-1][y+2] != team) { boardData[x-1][y+2] = 3; }
-        if(checkRange(x-2, y+1) && boardData[x-2][y+1] != team) { boardData[x-2][y+1] = 3; }
+        if(checkRange(x-1, y+2) && boardData[x-1][y+2] != team + 1) { boardData[x-1][y+2] = 3; }
+        if(checkRange(x-2, y+1) && boardData[x-2][y+1] != team + 1) { boardData[x-2][y+1] = 3; }
 
-        if(checkRange(x-1, y-2) && boardData[x-1][y-2] != team) { boardData[x-1][y-2] = 3; }
-        if(checkRange(x-2, y-1) && boardData[x-2][y-1] != team) { boardData[x-2][y-1] = 3; }
+        if(checkRange(x-1, y-2) && boardData[x-1][y-2] != team + 1) { boardData[x-1][y-2] = 3; }
+        if(checkRange(x-2, y-1) && boardData[x-2][y-1] != team + 1) { boardData[x-2][y-1] = 3; }
         return boardData;
     }
 
