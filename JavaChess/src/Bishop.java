@@ -9,10 +9,10 @@ public class Bishop extends Piece {
     }
 
     public int[][] possibleMoves(int[][] boardData) {
-        for(int z = 1; z <= 7; z++){ if(checkRange(x+z, y+z) && boardData[x+z][y+z] != team) { if (boardData[x+z][y+z] == opp) { boardData[x+z][y+z] = 3; break; } else { boardData[x+z][y+z] = 3; } } else { break; } }
-        for(int z = 1; z <= 7; z++){ if(checkRange(x+z, y-z) && boardData[x+z][y-z] != team) { if (boardData[x+z][y-z] == opp) { boardData[x+z][y-z] = 3; break; } else { boardData[x+z][y-z] = 3; } } else { break; } }
-        for(int z = 1; z <= 7; z++){ if(checkRange(x-z, y+z) && boardData[x-z][y+z] != team) { if (boardData[x-z][y+z] == opp) { boardData[x-z][y+z] = 3; break; } else { boardData[x-z][y+z] = 3; } } else { break; } }
-        for(int z = 1; z <= 7; z++){ if(checkRange(x-z, y-z) && boardData[x-z][y-z] != team) { if (boardData[x-z][y-z] == opp) { boardData[x-z][y-z] = 3; break; } else { boardData[x-z][y-z] = 3; } } else { break; } }
+        for(int z = 1; z <= 7; z++){ if(checkRange(x+z, y+z) && boardData[x+z][y+z] != team + 1) { if (boardData[x+z][y+z] == opp + 1) { boardData[x+z][y+z] = 3; break; } else { boardData[x+z][y+z] = 3; } } else { break; } }
+        for(int z = 1; z <= 7; z++){ if(checkRange(x+z, y-z) && boardData[x+z][y-z] != team + 1) { if (boardData[x+z][y-z] == opp + 1) { boardData[x+z][y-z] = 3; break; } else { boardData[x+z][y-z] = 3; } } else { break; } }
+        for(int z = 1; z <= 7; z++){ if(checkRange(x-z, y+z) && boardData[x-z][y+z] != team + 1) { if (boardData[x-z][y+z] == opp + 1) { boardData[x-z][y+z] = 3; break; } else { boardData[x-z][y+z] = 3; } } else { break; } }
+        for(int z = 1; z <= 7; z++){ if(checkRange(x-z, y-z) && boardData[x-z][y-z] != team + 1) { if (boardData[x-z][y-z] == opp + 1) { boardData[x-z][y-z] = 3; break; } else { boardData[x-z][y-z] = 3; } } else { break; } }
         return boardData;
     }
 
