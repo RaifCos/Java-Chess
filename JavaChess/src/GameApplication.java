@@ -10,7 +10,6 @@ import java.awt.image.*;
 import java.util.ArrayList;
 
 // TODO: Implement "Check" Mode (Players can only make moves to protect their King).
-// TODO: Tidy Code (it's a mess at the moment)
 
 public class GameApplication extends JFrame implements Runnable, MouseListener {
 
@@ -23,22 +22,20 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     private final Image titleImage;
     private final Image boardImage;
     private final Image backdropImage;
-    private final Image highlightImage;
-    private final Image castlingImage;
+    private final Image[] highlightImage = new Image[2];
     private final Image backsplashImage;
     private final Image[] TurnImage = new Image[2];
     private final Image[] promoImage = new Image[2];
-    private final int boardIndent = 280;
 
     public int[][] boardData = new int[8][8];
-    private Piece selectedPiece;
-    private Pawn upgradePawn;
+    private Piece selectedPiece; // Used when a Piece is Clicked
+    private Pawn upgradePawn; // Used when a Pawn is Promoted
     private final ArrayList<Piece> whitePieces = new ArrayList<>();
     private final ArrayList<Piece> blackPieces = new ArrayList<>();
 
-    // Boolean which states if it is White's or Black's Turn.
-    private boolean whiteTurn;
+    private boolean whiteTurn; // Used to indicate whose turn it is.
 
+    // Constructor
     public GameApplication() {
 
         //Create and Display JFrame Window.
@@ -65,9 +62,9 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         titleImage = (new ImageIcon(workingDirectory + "\\assets\\UI\\menuTitle.png")).getImage();
         backdropImage = (new ImageIcon(workingDirectory + "\\assets\\backdrops\\backdrop.png")).getImage();
         boardImage = (new ImageIcon(workingDirectory + "\\assets\\boards\\board.png")).getImage();
-        highlightImage = (new ImageIcon(workingDirectory + "\\assets\\UI\\tileHighlight.png")).getImage();
-        castlingImage = (new ImageIcon(workingDirectory + "\\assets\\UI\\tileCastling.png")).getImage();
         backsplashImage = (new ImageIcon(workingDirectory + "\\assets\\backdrops\\backsplash.png")).getImage();
+        highlightImage[0] = (new ImageIcon(workingDirectory + "\\assets\\UI\\tileHighlight.png")).getImage();
+        highlightImage[1] = (new ImageIcon(workingDirectory + "\\assets\\UI\\tileCastling.png")).getImage();
         TurnImage[0] = (new ImageIcon(workingDirectory + "\\assets\\UI\\turn0.png")).getImage();
         TurnImage[1] = (new ImageIcon(workingDirectory + "\\assets\\UI\\turn1.png")).getImage();
         promoImage[0] = (new ImageIcon(workingDirectory + "\\assets\\UI\\promotion0.png")).getImage();
@@ -80,11 +77,13 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         isInitialised = true;
     }
 
-    public static void main(String[] args) { GameApplication game = new GameApplication(); }
+    // Main Method creates an Instance of the Game to open.
+    public static void main(String[] args) { new GameApplication(); }
 
+    // Method to call the Paint() Method every 200 Milliseconds.
     public void run() {
         while(true) {
-            try { Thread.sleep(200); } catch (InterruptedException e) { }
+            try { Thread.sleep(200); } catch (InterruptedException ignored) { }
             this.repaint();
         }
     }
@@ -99,8 +98,8 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
                 break;
             case 1:
                 // The mouse is clicked during the game, so check if a location on the board was clicked.
-                if(clickX > boardIndent && clickX < 920 && clickY > 55 && clickY < 695) {
-                    pieceInteraction(((clickX - boardIndent) / 80), ((clickY - 55) / 80));
+                if(checkButton(clickX, clickY, 280, 55, 640, 640)) {
+                    pieceInteraction(((clickX - 280) / 80), ((clickY - 55) / 80));
                 } else { refreshBoardData(); }
                 break;
             case 2:
@@ -118,12 +117,13 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     public void mouseEntered(MouseEvent e) {}
     public void mouseExited(MouseEvent e) {}
 
+    // Method to check if a Button with given Dimensions has been clicked.
     public boolean checkButton(int clickX, int clickY, int xPos, int yPos, int width, int height) {
         return (clickX >= xPos) && (clickX <= xPos + width) && (clickY >= yPos) && (clickY <= yPos + height);
 
     }
 
-    // Method to set up and start the Game
+    // Method to set up and start the Game.
     public void startGame() {
         // White always goes first.
         whiteTurn = true;
@@ -152,53 +152,56 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         gameState = 1;
     }
 
-    // Refresh the State of each Piece and the Board.
-    public void refreshBoardData() {
-        selectedPiece = null;
-        boardData = new int[8][8];
-        for (Piece p : whitePieces) { boardData[p.x][p.y] = 1; }
-        for (Piece p : blackPieces) { boardData[p.x][p.y] = 2; }
-    }
-
     // Method that handles the main Gameplay mechanics.
     public void pieceInteraction(int tileX, int tileY) {
-        // If the King is selected and "Castling" is possible, then execute the move.
+
+        // The player can Castle, so execute if selected.
         if (boardData[tileX][tileY] == 4 && selectedPiece instanceof King) {
             castling(selectedPiece.team);
             refreshBoardData();
             whiteTurn = !whiteTurn;
-        } // If a Piece is selected and a valid Move Target is clicked, then move.
-        else if (boardData[tileX][tileY] == 3 && selectedPiece != null) {
+            return;
+        }
+
+        // A Piece is selected and a valid Move Target is clicked, so move.
+        if (boardData[tileX][tileY] == 3 && selectedPiece != null) {
             selectedPiece.move(tileX, tileY);
-            if (selectedPiece instanceof Pawn && (selectedPiece.y == 0 || selectedPiece.y == 7)) { pawnUpgradeTransition(selectedPiece.x, selectedPiece.team); }
+
+            // Check if the move has resulted in a Capture or Pawn Promotion.
+            if (selectedPiece instanceof Pawn && (selectedPiece.y == 0 || selectedPiece.y == 7)) {
+                pawnUpgradeInit(selectedPiece.x, selectedPiece.team);
+            }
             capturePiece(tileX, tileY);
             refreshBoardData();
-            if (gameState != 3) { whiteTurn = !whiteTurn; }
-        } // No Piece is Selected, so check if the Player is clicking on a Piece to select it.
-        else {
-            refreshBoardData();
-            // If it is White's Turn, check for a White Piece to select.
-            if(whiteTurn) {
-                for (Piece p : whitePieces) {
-                    if (p.x == tileX && p.y == tileY) {
-                        selectedPiece = p;
-                        boardData = selectedPiece.possibleMoves(boardData);
-                        // If a King is selected, check if "Castling" is possible.
-                        if(p instanceof King && p.moveCount == 0) { castleCheck(0); }
-                        break;
-                    } else { refreshBoardData(); }
-                }
-            } // If it is not White's Turn, check for a Black Piece to select.
-            else {
-                for (Piece p : blackPieces) {
-                    if (p.x == tileX && p.y == tileY) {
-                        selectedPiece = p;
-                        boardData = selectedPiece.possibleMoves(boardData);
-                        // If a King is selected, check if "Castling" is possible.
-                        if(p instanceof King && p.moveCount == 0) { castleCheck(1); }
-                        break;
-                    } else { refreshBoardData(); }
-                }
+
+            // Only end Turn if the Player doesn't have to Promote a Pawn.
+            if (gameState != 3) { whiteTurn = !whiteTurn; } return;
+        }
+
+        // No Piece is Selected, so check if the Player is clicking on a Piece to select it.
+        refreshBoardData();
+
+        // If it is White's Turn, check for a White Piece to select.
+        if(whiteTurn) {
+            for (Piece p : whitePieces) {
+                if (p.x == tileX && p.y == tileY) {
+                    selectedPiece = p;
+                    boardData = selectedPiece.possibleMoves(boardData);
+
+                    // If a King is selected, check if "Castling" is possible.
+                    if(p instanceof King && p.moveCount == 0) { castleCheck(0); }
+                    break;
+                } else { refreshBoardData(); }
+            }
+        } else {
+            for (Piece p : blackPieces) {
+                if (p.x == tileX && p.y == tileY) {
+                    selectedPiece = p;
+                    boardData = selectedPiece.possibleMoves(boardData);
+                    // If a King is selected, check if "Castling" is possible.
+                    if(p instanceof King && p.moveCount == 0) { castleCheck(1); }
+                    break;
+                } else { refreshBoardData(); }
             }
         }
     }
@@ -234,6 +237,22 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         gameState = 2;
     }
 
+    // Method to Check if the Player can execute the "Castling" technique.
+    public void castleCheck(int team) {
+        System.out.println(team);
+        // Selected Piece is a White King, so check if the White Team can Castle.
+        if (team == 0) {
+            for (Piece p : whitePieces) {
+                if (p instanceof Rook && p.moveCount == 0 && p.x == 0 && boardData[1][7] != 1 && boardData[2][7] != 1 && boardData[1][7] != 2 && boardData[2][7] != 2) { boardData[1][7] = 4; break; }
+            }
+        } // Selected Piece is a Black King, so check if the Black Team can Castle.
+        else if (team == 1) {
+            for (Piece p : blackPieces) {
+                if (p instanceof Rook && p.moveCount == 0 && p.x == 7 && boardData[6][0] != 1 && boardData[5][0] != 1 && boardData[6][0] != 2 && boardData[5][0] != 2) { boardData[6][0] = 4; break; }
+            }
+        }
+    }
+
     // Method that carries out the "Castling" technique.
     public void castling(int team) {
         // Selected Piece is a White King, so Castle on the White Side.
@@ -251,24 +270,8 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         }
     }
 
-    // Method to Check if the Player can execute the "Castling" technique.
-    public void castleCheck(int team) {
-        // Selected Piece is a White King, so check if the White Team can Castle.
-        if (team == 0) {
-            for (Piece p : whitePieces) {
-                if (p instanceof Rook && p.moveCount == 0 && p.x == 0 && boardData[1][7] != 1 && boardData[2][7] != 1 && boardData[1][7] != 2 && boardData[2][7] != 2) { boardData[1][7] = 4; break; }
-            }
-        } // Selected Piece is a Black King, so check if the Black Team can Castle.
-        else if (team == 1) {
-            for (Piece p : blackPieces) {
-                if (p instanceof Rook && p.moveCount == 0 && p.x == 7 && boardData[6][0] != 1 && boardData[5][0] != 1 && boardData[6][0] != 2 && boardData[5][0] != 2) { boardData[6][0] = 4; break; }
-            }
-        }
-    }
-
-    // Method to Promote Pawns when they reach the opposite end of the board.
-    public void pawnUpgradeTransition(int xPos, int team) {
-        System.out.println(team);
+    // Method to transition game into the Pawn Promotion Menu, getting the Piece to be Promote.
+    public void pawnUpgradeInit(int xPos, int team) {
         if(team == 0) {
             for (Piece p : whitePieces) {
                 if(p.x == xPos && p.y == 0) {
@@ -290,39 +293,53 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         }
     }
 
+    // Method to promote a Pawn that made it across the board.
     public void pawnUpgrade(int xClick, int yClick) {
         if(upgradePawn == null) { return; }
         boolean upgradeSuccess = false;
 
+        // Player clicked the "Rook" Button, so promote into a Rook.
         if (checkButton(xClick, yClick, 414, 330, 90, 90)) {
             if(whiteTurn) { whitePieces.add(new Rook(0, upgradePawn.x, upgradePawn.y)); }
             else { blackPieces.add(new Rook(1, upgradePawn.x, upgradePawn.y)); }
             upgradeSuccess = true;
         }
 
+        // Player clicked the "Knight" Button, so promote into a Knight.
         if (checkButton(xClick, yClick, 508, 330, 90, 90)) {
             if(whiteTurn) { whitePieces.add(new Knight(0, upgradePawn.x, upgradePawn.y)); }
             else { blackPieces.add(new Knight(1, upgradePawn.x, upgradePawn.y)); }
             upgradeSuccess = true;
         }
 
+        // Player clicked the "Bishop" Button, so promote into a Bishop.
         if (checkButton(xClick, yClick, 602, 330, 90, 90)) {
             if(whiteTurn) { whitePieces.add(new Bishop(0, upgradePawn.x, upgradePawn.y)); }
             else { blackPieces.add(new Bishop(1, upgradePawn.x, upgradePawn.y)); }
             upgradeSuccess = true;
         }
 
+        // Player clicked the "Queen" Button, so promote into a Queen.
         if (checkButton(xClick, yClick, 696, 330, 90, 90)) {
             if(whiteTurn) { whitePieces.add(new Queen(0, upgradePawn.x, upgradePawn.y)); }
             else { blackPieces.add(new Queen(1, upgradePawn.x, upgradePawn.y)); }
             upgradeSuccess = true;
         }
 
+        // If a Promotion successfully occurred, then end the turn.
         if(upgradeSuccess) {
             gameState = 1;
             upgradePawn = null;
             whiteTurn = !whiteTurn;
         }
+    }
+
+    // Refresh the State of each Piece and the Board.
+    public void refreshBoardData() {
+        selectedPiece = null;
+        boardData = new int[8][8];
+        for (Piece p : whitePieces) { boardData[p.x][p.y] = 1; }
+        for (Piece p : blackPieces) { boardData[p.x][p.y] = 2; }
     }
 
     // Reset all Game Pieces and gameState.
@@ -336,40 +353,48 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     public void paint(Graphics g) {
         // Only Paint if game is Initialised.
         if(!isInitialised) { return; }
+
+        // Set Buffer and Font Settings.
         g = offscreenBuffer;
         g.setFont(new Font("Serif", Font.BOLD, 32));
         g.setColor(Color.WHITE);
 
-        switch (gameState) {
-            case 0: // Paint the Title Screen.
-                g.drawImage(titleImage, 0, -25, null);
-                break;
-            default: // Paint the Board, Pieces, and Game UI.
-                g.drawImage(backdropImage, 0, -25, null);
-                g.drawImage(boardImage, boardIndent, 55, null);
-                if(whiteTurn) { g.drawImage(TurnImage[0], 90, 330, null); }
-                else { g.drawImage(TurnImage[1], 90, 330, null); }
-                for (Piece p : whitePieces) { p.paint(g); }
-                for (Piece p : blackPieces) { p.paint(g); }
-                for (int i=0; i<8; i++) {
-                    for (int j=0; j<8; j++) {
-                        if(boardData[i][j] == 3) { g.drawImage(highlightImage, boardIndent+(80*i), 55+(80*j), null); }
-                        else if(boardData[i][j] == 4) { g.drawImage(castlingImage, boardIndent+(80*i), 55+(80*j), null); }
-                    }
-                }
-                if(gameState == 2) {
-                    // Paint the Results Screen over the Game.
-                    g.drawImage(backsplashImage, 0, -25, null);
-                    g.drawString(winner, 515, 385);
-                }
+        // Paint based on Game State.
+        // Paint the Title Screen.
+        if(gameState == 0) { g.drawImage(titleImage, 0, -25, null); }
+        else { // Paint the Board, Pieces, and Game UI.
+            g.drawImage(backdropImage, 0, -25, null);
+            g.drawImage(boardImage, 280, 55, null);
 
-                if(gameState == 3) {
-                    // Paint the Promotion Menu
-                    g.drawImage(backsplashImage, 0, -25, null);
-                    if(whiteTurn) { g.drawImage(promoImage[0], 412, 330, null); }
-                    if(!whiteTurn) { g.drawImage(promoImage[1], 412, 330, null); }
+            // Draw the Turn Indicator based on whose turn it is.
+            if (whiteTurn) { g.drawImage(TurnImage[0], 90, 330, null); }
+            else { g.drawImage(TurnImage[1], 90, 330, null); }
+
+            // Paint all Pieces.
+            for (Piece p : whitePieces) { p.paint(g); }
+            for (Piece p : blackPieces) { p.paint(g); }
+
+            // Paint any Highlighted Spaces on the Board.
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    if (boardData[i][j] == 3) { g.drawImage(highlightImage[0], 280 + (80 * i), 55 + (80 * j), null); }
+                    if (boardData[i][j] == 4) { g.drawImage(highlightImage[1], 280 + (80 * i), 55 + (80 * j), null); }
                 }
-                break;
+            }
+
+            // If Statements inside the Switch Case allow for Image Overlays.
+            if (gameState == 2) {
+                // Paint the Results Screen over the Game.
+                g.drawImage(backsplashImage, 0, -25, null);
+                g.drawString(winner, 515, 385);
+            }
+
+            if (gameState == 3) {
+                // Paint the Pawn Promotion Menu
+                g.drawImage(backsplashImage, 0, -25, null);
+                if (whiteTurn) { g.drawImage(promoImage[0], 412, 330, null); }
+                if (!whiteTurn) { g.drawImage(promoImage[1], 412, 330, null); }
+            }
         }
         strategy.show();
     }
