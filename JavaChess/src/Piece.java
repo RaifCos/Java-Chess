@@ -9,8 +9,8 @@ public class Piece {
     protected Image pieceImage;
 
     public Piece(int team, int x, int y) {
-        this.team = team + 1;
-        opp = 2 - team;
+        this.team = team;
+        opp = 1 - team;
         this.x = x;
         this.y = y;
     }
