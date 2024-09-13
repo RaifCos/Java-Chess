@@ -103,7 +103,6 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         int clickY = e.getY();
         switch (gameState) {
             case 0:
-                // TODO: Add Buttons to choose between Single and Multiplayer.
                 if (checkButton(clickX, clickY, 240, 440, 336, 184)) {
                     singlePlayer = true;
                     startGame();
@@ -142,7 +141,6 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     public void startGame() {
         // White always goes first.
         whiteTurn = true;
-        // TODO: Set singlePlayer to true if the option is chosen.
         // Assemble the White Pieces.
         for(int i=0; i<8; i++) { whitePieces.add(new Pawn(0, i, 6)); }
         whitePieces.add(new Rook(0,0,7));
