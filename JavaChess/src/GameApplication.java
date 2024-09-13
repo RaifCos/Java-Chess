@@ -9,8 +9,6 @@ import javax.swing.*;
 import java.awt.image.*;
 import java.util.ArrayList;
 
-// TODO: Implement "Check" Mode (Players can only make moves to protect their King).
-
 public class GameApplication extends JFrame implements Runnable, MouseListener {
 
     private boolean isInitialised = false;
@@ -19,7 +17,12 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     private int gameState = 0;
     private String winner;
 
+    private final AIPlayer aiPlayer = new AIPlayer();
+    private boolean singlePlayer = false;
+    private int aiCountdown = 10;
+
     private final Image titleImage;
+    private final Image titleButtonImage;
     private final Image boardImage;
     private final Image backdropImage;
     private final Image[] highlightImage = new Image[2];
@@ -60,6 +63,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         // Retrieve Images
         String workingDirectory = System.getProperty("user.dir");
         titleImage = (new ImageIcon(workingDirectory + "\\assets\\UI\\menuTitle.png")).getImage();
+        titleButtonImage = (new ImageIcon(workingDirectory + "\\assets\\UI\\menuButtons.png")).getImage();
         backdropImage = (new ImageIcon(workingDirectory + "\\assets\\backdrops\\backdrop.png")).getImage();
         boardImage = (new ImageIcon(workingDirectory + "\\assets\\boards\\board.png")).getImage();
         backsplashImage = (new ImageIcon(workingDirectory + "\\assets\\backdrops\\backsplash.png")).getImage();
@@ -84,6 +88,11 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     public void run() {
         while(true) {
             try { Thread.sleep(200); } catch (InterruptedException ignored) { }
+            if (singlePlayer && aiCountdown > 0 && !whiteTurn) { aiCountdown--; }
+            else if (aiCountdown <= 0 && !whiteTurn) {
+                while(!whiteTurn) { aiMove(); }
+                aiCountdown = 10;
+            }
             this.repaint();
         }
     }
@@ -94,11 +103,17 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         int clickY = e.getY();
         switch (gameState) {
             case 0:
-                startGame();
-                break;
+                // TODO: Add Buttons to choose between Single and Multiplayer.
+                if (checkButton(clickX, clickY, 240, 440, 336, 184)) {
+                    singlePlayer = true;
+                    startGame();
+                } else if (checkButton(clickX, clickY, 626, 440, 336, 184)) {
+                    singlePlayer = false;
+                    startGame();
+                } break;
             case 1:
                 // The mouse is clicked during the game, so check if a location on the board was clicked.
-                if(checkButton(clickX, clickY, 280, 55, 640, 640)) {
+                if (checkButton(clickX, clickY, 280, 55, 640, 640) && !(singlePlayer && !whiteTurn) ) {
                     pieceInteraction(((clickX - 280) / 80), ((clickY - 55) / 80));
                 } else { refreshBoardData(); }
                 break;
@@ -127,6 +142,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
     public void startGame() {
         // White always goes first.
         whiteTurn = true;
+        // TODO: Set singlePlayer to true if the option is chosen.
         // Assemble the White Pieces.
         for(int i=0; i<8; i++) { whitePieces.add(new Pawn(0, i, 6)); }
         whitePieces.add(new Rook(0,0,7));
@@ -158,8 +174,8 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         // The player can Castle, so execute if selected.
         if (boardData[tileX][tileY] == 4 && selectedPiece instanceof King) {
             castling(selectedPiece.team);
-            refreshBoardData();
             whiteTurn = !whiteTurn;
+            refreshBoardData();
             return;
         }
 
@@ -187,13 +203,12 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
                 if (p.x == tileX && p.y == tileY) {
                     selectedPiece = p;
                     boardData = selectedPiece.possibleMoves(boardData);
-
                     // If a King is selected, check if "Castling" is possible.
                     if(p instanceof King && p.moveCount == 0) { castleCheck(0); }
                     break;
                 } else { refreshBoardData(); }
             }
-        } else {
+        } else if (!singlePlayer) {
             for (Piece p : blackPieces) {
                 if (p.x == tileX && p.y == tileY) {
                     selectedPiece = p;
@@ -203,6 +218,24 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
                     break;
                 } else { refreshBoardData(); }
             }
+        }
+    }
+
+    // Method to handle AI Opponent's movement.
+    public void aiMove() {
+        int[] res;
+
+        // Select a Black Piece at Random and examine its possible moves.
+        int index = (int)(Math.random() * blackPieces.size());
+        Piece p = blackPieces.get(index);
+        res = aiPlayer.decideMove(p, boardData);
+
+        // If a Piece with a possible move is found, then move.
+        if (res != null) {
+            p.move(res[0], res[1]);
+            capturePiece(res[0], res[1]);
+            refreshBoardData();
+            whiteTurn = !whiteTurn;
         }
     }
 
@@ -232,6 +265,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
 
     // Method that ends the Game when a Player's King is captured.
     public void checkmate(int result) {
+        singlePlayer = false;
         if(result == 0) { winner = "White Wins!"; }
         else if(result == 1) { winner = "Black Wins!"; }
         gameState = 2;
@@ -347,6 +381,7 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
         blackPieces.clear();
         whitePieces.clear();
         gameState = 0;
+        singlePlayer = false;
     }
 
     // Paint Method
@@ -361,11 +396,12 @@ public class GameApplication extends JFrame implements Runnable, MouseListener {
 
         // Paint based on Game State.
         // Paint the Title Screen.
-        if(gameState == 0) { g.drawImage(titleImage, 0, -25, null); }
-        else { // Paint the Board, Pieces, and Game UI.
+        if(gameState == 0) {
+            g.drawImage(titleImage, 0, -25, null);
+            g.drawImage(titleButtonImage, 0, -25, null);
+        } else { // Paint the Board, Pieces, and Game UI.
             g.drawImage(backdropImage, 0, -25, null);
             g.drawImage(boardImage, 280, 55, null);
-
             // Draw the Turn Indicator based on whose turn it is.
             if (whiteTurn) { g.drawImage(TurnImage[0], 90, 330, null); }
             else { g.drawImage(TurnImage[1], 90, 330, null); }
